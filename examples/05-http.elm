@@ -8,9 +8,10 @@ import Task
 
 
 
+main : Program Never
 main =
   Html.program
-    { init = init "cats"
+    { init = init "boobs"
     , view = view
     , update = update
     , subscriptions = subscriptions
@@ -24,12 +25,13 @@ main =
 type alias Model =
   { topic : String
   , gifUrl : String
+  , errorMessage : String
   }
 
 
 init : String -> (Model, Cmd Msg)
 init topic =
-  ( Model topic "waiting.gif"
+  ( Model topic "waiting.gif" ""
   , getRandomGif topic
   )
 
@@ -42,6 +44,7 @@ type Msg
   = MorePlease
   | FetchSucceed String
   | FetchFail Http.Error
+  | SetTopic String
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -51,10 +54,13 @@ update msg model =
       (model, getRandomGif model.topic)
 
     FetchSucceed newUrl ->
-      (Model model.topic newUrl, Cmd.none)
+      (Model model.topic newUrl "", Cmd.none)
 
-    FetchFail _ ->
-      (model, Cmd.none)
+    FetchFail x ->
+      ({ model | errorMessage = toString x}, Cmd.none)
+
+    SetTopic newTopic ->
+      ({model | topic = newTopic}, Cmd.none)
 
 
 
@@ -65,9 +71,12 @@ view : Model -> Html Msg
 view model =
   div []
     [ h2 [] [text model.topic]
+    , input [ value model.topic, onInput SetTopic ] []
     , button [ onClick MorePlease ] [ text "More Please!" ]
     , br [] []
     , img [src model.gifUrl] []
+    , br [] []
+    , p [] [ text model.errorMessage ]
     ]
 
 
